@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">MotionScroll</string>
+    <string name="accessibility_service_description">Head-tracking scroll service for assistive technology</string>
+</resources>

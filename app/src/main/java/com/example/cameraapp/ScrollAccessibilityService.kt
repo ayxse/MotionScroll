@@ -162,9 +162,9 @@ class ScrollAccessibilityService : AccessibilityService(), LifecycleOwner {
                 
                 isCameraRunning = true
                 Log.d(TAG, "Camera started successfully")
-                // Broadcast the state change
-                val broadcastIntent = Intent(ACTION_CAMERA_STATE_CHANGED)
-                broadcastIntent.putExtra(EXTRA_CAMERA_STATE, true)
+                val broadcastIntent = Intent(ACTION_CAMERA_STATE_CHANGED).apply {
+                    putExtra(EXTRA_CAMERA_STATE, true)
+                }
                 sendBroadcast(broadcastIntent)
             } catch (exc: Exception) {
                 Log.e(TAG, "Failed to start camera: ${exc.message}", exc)
@@ -180,8 +180,9 @@ class ScrollAccessibilityService : AccessibilityService(), LifecycleOwner {
             imageAnalyzer = null
             isCameraRunning = false
             
-            val broadcastIntent = Intent(ACTION_CAMERA_STATE_CHANGED)
-            broadcastIntent.putExtra(EXTRA_CAMERA_STATE, false)
+            val broadcastIntent = Intent(ACTION_CAMERA_STATE_CHANGED).apply {
+                putExtra(EXTRA_CAMERA_STATE, false)
+            }
             sendBroadcast(broadcastIntent)
             
             Log.d(TAG, "Camera stopped successfully")

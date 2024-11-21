@@ -35,18 +35,24 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import android.content.BroadcastReceiver
 import android.content.IntentFilter
+import android.widget.Toast
 
 val Purple8e5fb6 = Color(0xFF8e5fb6)
 
 class MainActivity : ComponentActivity() {
     private val CAMERA_PERMISSION_REQUEST = 100
+    private val REQUIRED_PERMISSIONS = arrayOf(
+        Manifest.permission.CAMERA,
+        Manifest.permission.FOREGROUND_SERVICE,
+        Manifest.permission.FOREGROUND_SERVICE_CAMERA,
+        Manifest.permission.POST_NOTIFICATIONS
+    )
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        // Request camera permission if not granted
-        if (!checkCameraPermission()) {
-            requestCameraPermission()
+        
+        if (!allPermissionsGranted()) {
+            ActivityCompat.requestPermissions(this, REQUIRED_PERMISSIONS, CAMERA_PERMISSION_REQUEST)
         }
 
         setContent {
@@ -107,18 +113,19 @@ class MainActivity : ComponentActivity() {
         )
     }
 
+    private fun allPermissionsGranted() = REQUIRED_PERMISSIONS.all {
+        ContextCompat.checkSelfPermission(baseContext, it) == PackageManager.PERMISSION_GRANTED
+    }
+
     override fun onRequestPermissionsResult(
         requestCode: Int,
-        permissions: Array<out String>,
+        permissions: Array<String>,
         grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        when (requestCode) {
-            CAMERA_PERMISSION_REQUEST -> {
-                if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    // Permission granted, can now use camera
-                    toggleCamera()
-                }
+        if (requestCode == CAMERA_PERMISSION_REQUEST) {
+            if (!allPermissionsGranted()) {
+                Toast.makeText(this, "Permissions not granted.", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -129,24 +136,23 @@ fun MainScreen(onOpenAccessibilitySettings: () -> Unit) {
     val context = LocalContext.current
     val isDarkTheme = isSystemInDarkTheme()
     
-    // Update camera state properly
-    var isCameraRunning by remember { mutableStateOf(false) }
+    // Create a mutable state for camera status
+    var isCameraRunning by remember { mutableStateOf(ScrollAccessibilityService.isCameraRunning) }
 
-    // Create broadcast receiver for camera state changes
+    // Listen for camera state changes
     DisposableEffect(Unit) {
         val receiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context?, intent: Intent?) {
                 when (intent?.action) {
                     ScrollAccessibilityService.ACTION_CAMERA_STATE_CHANGED -> {
-                        isCameraRunning = intent.getBooleanExtra(ScrollAccessibilityService.EXTRA_CAMERA_STATE, false)
+                        val newState = intent.getBooleanExtra(ScrollAccessibilityService.EXTRA_CAMERA_STATE, false)
+                        isCameraRunning = newState
                     }
                 }
             }
         }
 
-        val filter = IntentFilter().apply {
-            addAction(ScrollAccessibilityService.ACTION_CAMERA_STATE_CHANGED)
-        }
+        val filter = IntentFilter(ScrollAccessibilityService.ACTION_CAMERA_STATE_CHANGED)
         context.registerReceiver(receiver, filter)
 
         onDispose {
@@ -191,7 +197,7 @@ fun MainScreen(onOpenAccessibilitySettings: () -> Unit) {
             text = "Enable Accessibility Service"
         )
 
-        // Camera Toggle Button
+        // Updated Camera Toggle Button
         AIButton(
             onClick = {
                 val intent = Intent(context, ScrollAccessibilityService::class.java).apply {

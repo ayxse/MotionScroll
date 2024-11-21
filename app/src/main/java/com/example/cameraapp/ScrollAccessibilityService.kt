@@ -62,6 +62,7 @@ class ScrollAccessibilityService : AccessibilityService(), LifecycleOwner {
         super.onCreate()
         lifecycleRegistry = LifecycleRegistry(this)
         lifecycleRegistry.currentState = Lifecycle.State.CREATED
+        cameraExecutor = Executors.newSingleThreadExecutor()
     }
 
     override fun onServiceConnected() {
@@ -70,17 +71,19 @@ class ScrollAccessibilityService : AccessibilityService(), LifecycleOwner {
         lifecycleRegistry.currentState = Lifecycle.State.STARTED
 
         val info = AccessibilityServiceInfo()
-        info.flags = AccessibilityServiceInfo.FLAG_REQUEST_FILTER_KEY_EVENTS
-        info.eventTypes = AccessibilityEvent.TYPES_ALL_MASK
+        info.flags = AccessibilityServiceInfo.FLAG_REQUEST_FILTER_KEY_EVENTS or
+                    AccessibilityServiceInfo.DEFAULT
+        info.eventTypes = AccessibilityEvent.TYPE_VIEW_SCROLLED or 
+                         AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED
         info.feedbackType = AccessibilityServiceInfo.FEEDBACK_GENERIC
         serviceInfo = info
 
-        cameraExecutor = Executors.newSingleThreadExecutor()
         isServiceEnabled = true
-        startCamera()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        Log.d(TAG, "onStartCommand received with action: ${intent?.action}")
+        
         when (intent?.action) {
             ACTION_TOGGLE_SERVICE -> {
                 isServiceEnabled = !isServiceEnabled
@@ -97,8 +100,7 @@ class ScrollAccessibilityService : AccessibilityService(), LifecycleOwner {
                 } else {
                     startCamera()
                 }
-                isCameraRunning = !isCameraRunning
-                Log.d(TAG, "Camera ${if (isCameraRunning) "started" else "stopped"}")
+                Log.d(TAG, "Camera toggle completed. Running: $isCameraRunning")
             }
             ACTION_TOGGLE_SMOOTH_SCROLL -> {
                 isSmoothScrollEnabled = !isSmoothScrollEnabled
@@ -125,50 +127,71 @@ class ScrollAccessibilityService : AccessibilityService(), LifecycleOwner {
     }
 
     private fun startCamera() {
-        if (!isServiceEnabled) return
+        Log.d(TAG, "Starting camera...")
+        
+        if (!isServiceEnabled) {
+            Log.e(TAG, "Service not enabled, cannot start camera")
+            return
+        }
+
+        lifecycleRegistry.currentState = Lifecycle.State.RESUMED
 
         val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
-
         cameraProviderFuture.addListener({
-            cameraProvider = cameraProviderFuture.get()
-
-            imageAnalyzer = ImageAnalysis.Builder()
-                .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                .build()
-                .also {
-                    it.setAnalyzer(cameraExecutor, FaceAnalyzer { gazeDirection ->
-                        handleGazeDirection(gazeDirection)
-                    })
-                }
-
-            val cameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA
-
             try {
+                Log.d(TAG, "Setting up camera...")
+                cameraProvider = cameraProviderFuture.get()
                 cameraProvider?.unbindAll()
+
+                imageAnalyzer = ImageAnalysis.Builder()
+                    .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                    .build()
+                    .also {
+                        it.setAnalyzer(cameraExecutor, FaceAnalyzer { gazeDirection ->
+                            handleGazeDirection(gazeDirection)
+                        })
+                    }
+
+                val cameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA
+
                 cameraProvider?.bindToLifecycle(
-                    this, cameraSelector, imageAnalyzer
+                    this,
+                    cameraSelector,
+                    imageAnalyzer
                 )
+                
                 isCameraRunning = true
-                Log.d(TAG, "Camera use cases bound successfully")
+                Log.d(TAG, "Camera started successfully")
+                // Broadcast the state change
+                val broadcastIntent = Intent(ACTION_CAMERA_STATE_CHANGED)
+                broadcastIntent.putExtra(EXTRA_CAMERA_STATE, true)
+                sendBroadcast(broadcastIntent)
             } catch (exc: Exception) {
-                Log.e(TAG, "Use case binding failed", exc)
+                Log.e(TAG, "Failed to start camera: ${exc.message}", exc)
             }
         }, ContextCompat.getMainExecutor(this))
     }
 
     private fun stopCamera() {
+        Log.d(TAG, "Stopping camera...")
         try {
+            lifecycleRegistry.currentState = Lifecycle.State.CREATED
             cameraProvider?.unbindAll()
             imageAnalyzer = null
             isCameraRunning = false
-            Log.d(TAG, "Camera stopped")
+            
+            val broadcastIntent = Intent(ACTION_CAMERA_STATE_CHANGED)
+            broadcastIntent.putExtra(EXTRA_CAMERA_STATE, false)
+            sendBroadcast(broadcastIntent)
+            
+            Log.d(TAG, "Camera stopped successfully")
         } catch (exc: Exception) {
-            Log.e(TAG, "Failed to stop camera", exc)
+            Log.e(TAG, "Failed to stop camera: ${exc.message}")
         }
     }
 
     private fun handleGazeDirection(gazeDirection: GazeDirection) {
-        if (!isServiceEnabled) return
+        if (!isServiceEnabled || !isCameraRunning) return
 
         val currentTime = System.currentTimeMillis()
         if (isAddedDelayEnabled && currentTime - lastDetectionTime < addedDelaySeconds * 1000L) {
@@ -190,19 +213,34 @@ class ScrollAccessibilityService : AccessibilityService(), LifecycleOwner {
     }
 
     private fun performScroll(direction: Float) {
+        if (!isServiceEnabled || !isCameraRunning) {
+            Log.d(TAG, "Scroll ignored - service enabled: $isServiceEnabled, camera running: $isCameraRunning")
+            return
+        }
+
         Log.d(TAG, "Performing scroll: $direction")
         val scrollPath = Path()
-        scrollPath.moveTo(500f, 500f)
-
-        val scrollDistance = currentScrollSpeed
-
-        scrollPath.lineTo(500f, 500f - direction * scrollDistance)
+        val screenHeight = resources.displayMetrics.heightPixels
+        val startY = screenHeight / 2f
+        
+        scrollPath.moveTo(500f, startY)
+        scrollPath.lineTo(500f, startY - (direction * currentScrollSpeed))
 
         val gestureBuilder = GestureDescription.Builder()
         val duration = if (isSmoothScrollEnabled) 300 else 100
         gestureBuilder.addStroke(GestureDescription.StrokeDescription(scrollPath, 0, duration.toLong()))
 
-        dispatchGesture(gestureBuilder.build(), null, null)
+        dispatchGesture(gestureBuilder.build(), object : GestureResultCallback() {
+            override fun onCompleted(gestureDescription: GestureDescription?) {
+                super.onCompleted(gestureDescription)
+                Log.d(TAG, "Scroll completed")
+            }
+
+            override fun onCancelled(gestureDescription: GestureDescription?) {
+                super.onCancelled(gestureDescription)
+                Log.e(TAG, "Scroll cancelled")
+            }
+        }, null)
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {

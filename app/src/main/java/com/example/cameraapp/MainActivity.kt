@@ -27,12 +27,27 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.core.view.WindowCompat
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
+import android.content.BroadcastReceiver
+import android.content.IntentFilter
 
 val Purple8e5fb6 = Color(0xFF8e5fb6)
 
 class MainActivity : ComponentActivity() {
+    private val CAMERA_PERMISSION_REQUEST = 100
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Request camera permission if not granted
+        if (!checkCameraPermission()) {
+            requestCameraPermission()
+        }
 
         setContent {
             val darkTheme = isSystemInDarkTheme()
@@ -55,8 +70,7 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     MainScreen(
-                        onOpenAccessibilitySettings = { openAccessibilitySettings() },
-                        onToggleCamera = { toggleCamera() }
+                        onOpenAccessibilitySettings = { openAccessibilitySettings() }
                     )
                 }
             }
@@ -69,31 +83,96 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun toggleCamera() {
-        val intent = Intent(this, ScrollAccessibilityService::class.java)
-        intent.action = ScrollAccessibilityService.ACTION_TOGGLE_CAMERA
-        startService(intent)
+        if (!checkCameraPermission()) {
+            requestCameraPermission()
+            return
+        }
+
+        val intent = Intent(ScrollAccessibilityService.ACTION_TOGGLE_CAMERA)
+        sendBroadcast(intent)
+    }
+
+    private fun checkCameraPermission(): Boolean {
+        return ContextCompat.checkSelfPermission(
+            this,
+            Manifest.permission.CAMERA
+        ) == PackageManager.PERMISSION_GRANTED
+    }
+
+    private fun requestCameraPermission() {
+        ActivityCompat.requestPermissions(
+            this,
+            arrayOf(Manifest.permission.CAMERA),
+            CAMERA_PERMISSION_REQUEST
+        )
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        when (requestCode) {
+            CAMERA_PERMISSION_REQUEST -> {
+                if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    // Permission granted, can now use camera
+                    toggleCamera()
+                }
+            }
+        }
     }
 }
 
 @Composable
-fun MainScreen(onOpenAccessibilitySettings: () -> Unit, onToggleCamera: () -> Unit) {
+fun MainScreen(onOpenAccessibilitySettings: () -> Unit) {
     val context = LocalContext.current
     val isDarkTheme = isSystemInDarkTheme()
+    
+    // Update camera state properly
+    var isCameraRunning by remember { mutableStateOf(false) }
+
+    // Create broadcast receiver for camera state changes
+    DisposableEffect(Unit) {
+        val receiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context?, intent: Intent?) {
+                when (intent?.action) {
+                    ScrollAccessibilityService.ACTION_CAMERA_STATE_CHANGED -> {
+                        isCameraRunning = intent.getBooleanExtra(ScrollAccessibilityService.EXTRA_CAMERA_STATE, false)
+                    }
+                }
+            }
+        }
+
+        val filter = IntentFilter().apply {
+            addAction(ScrollAccessibilityService.ACTION_CAMERA_STATE_CHANGED)
+        }
+        context.registerReceiver(receiver, filter)
+
+        onDispose {
+            context.unregisterReceiver(receiver)
+        }
+    }
+
+    // State variables
     var sensitivity by remember { mutableStateOf(ScrollAccessibilityService.currentSensitivity) }
     var scrollSpeed by remember { mutableStateOf(ScrollAccessibilityService.currentScrollSpeed) }
     var isSmoothScrollEnabled by remember { mutableStateOf(ScrollAccessibilityService.isSmoothScrollEnabled) }
     var isAddedDelayEnabled by remember { mutableStateOf(ScrollAccessibilityService.isAddedDelayEnabled) }
     var delaySeconds by remember { mutableStateOf(ScrollAccessibilityService.addedDelaySeconds.toString()) }
-    var isCameraRunning by remember { mutableStateOf(ScrollAccessibilityService.isCameraRunning) }
+
+    // Add scroll state
+    val scrollState = rememberScrollState()
 
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .verticalScroll(scrollState)
             .padding(24.dp),
         verticalArrangement = Arrangement.spacedBy(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Header logo
+        // Logo Image
         Image(
             painter = painterResource(
                 id = if (isDarkTheme) R.drawable.ic_logo_white else R.drawable.ic_logo_purple
@@ -106,9 +185,21 @@ fun MainScreen(onOpenAccessibilitySettings: () -> Unit, onToggleCamera: () -> Un
             contentScale = ContentScale.Fit
         )
 
+        // Enable Accessibility Service Button
         AIButton(
             onClick = onOpenAccessibilitySettings,
             text = "Enable Accessibility Service"
+        )
+
+        // Camera Toggle Button
+        AIButton(
+            onClick = {
+                val intent = Intent(context, ScrollAccessibilityService::class.java).apply {
+                    action = ScrollAccessibilityService.ACTION_TOGGLE_CAMERA
+                }
+                context.startService(intent)
+            },
+            text = if (isCameraRunning) "Turn Camera OFF" else "Turn Camera ON"
         )
 
         Text("Adjust Sensitivity", style = MaterialTheme.typography.headlineSmall)
@@ -171,9 +262,9 @@ fun MainScreen(onOpenAccessibilitySettings: () -> Unit, onToggleCamera: () -> Un
             if (isAddedDelayEnabled) {
                 OutlinedTextField(
                     value = delaySeconds,
-                    onValueChange = {
-                        if (it.isEmpty() || it.toIntOrNull() != null) {
-                            delaySeconds = it
+                    onValueChange = { newValue ->
+                        if (newValue.isEmpty() || newValue.toIntOrNull() != null) {
+                            delaySeconds = newValue
                         }
                     },
                     label = { Text("Delay (seconds)") },
@@ -189,7 +280,7 @@ fun MainScreen(onOpenAccessibilitySettings: () -> Unit, onToggleCamera: () -> Un
                         intent.putExtra(ScrollAccessibilityService.EXTRA_DELAY_SECONDS, delay)
                         context.sendBroadcast(intent)
                     },
-                    modifier = Modifier.height(56.dp) // Match the height of the TextField
+                    modifier = Modifier.height(56.dp)
                 ) {
                     Text("Enter")
                 }
@@ -197,18 +288,10 @@ fun MainScreen(onOpenAccessibilitySettings: () -> Unit, onToggleCamera: () -> Un
         }
 
         Spacer(modifier = Modifier.height(16.dp))
-
-        AIButton(
-            onClick = {
-                onToggleCamera()
-                isCameraRunning = !isCameraRunning
-            },
-            text = if (isCameraRunning) "Turn OFF" else "Turn ON"
-        )
     }
 }
 
-// Add this function to simplify sending broadcasts
+// Helper function to send broadcasts
 private fun sendBroadcast(context: Context, action: String) {
     val intent = Intent(action)
     context.sendBroadcast(intent)

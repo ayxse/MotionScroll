@@ -36,6 +36,8 @@ import androidx.core.content.ContextCompat
 import android.content.BroadcastReceiver
 import android.content.IntentFilter
 import android.widget.Toast
+import android.util.Log
+import android.os.Build
 
 val Purple8e5fb6 = Color(0xFF8e5fb6)
 
@@ -55,31 +57,36 @@ class MainActivity : ComponentActivity() {
             ActivityCompat.requestPermissions(this, REQUIRED_PERMISSIONS, CAMERA_PERMISSION_REQUEST)
         }
 
-        setContent {
-            val darkTheme = isSystemInDarkTheme()
+        try {
+            setContent {
+                val darkTheme = isSystemInDarkTheme()
 
-            // Set status bar color based on theme
-            window.statusBarColor = if (darkTheme) {
-                android.graphics.Color.BLACK
-            } else {
-                android.graphics.Color.WHITE
-            }
+                // Set status bar color based on theme
+                window.statusBarColor = if (darkTheme) {
+                    android.graphics.Color.BLACK
+                } else {
+                    android.graphics.Color.WHITE
+                }
 
-            // Set status bar icons color
-            WindowCompat.getInsetsController(window, window.decorView).apply {
-                isAppearanceLightStatusBars = !darkTheme
-            }
+                // Set status bar icons color
+                WindowCompat.getInsetsController(window, window.decorView).apply {
+                    isAppearanceLightStatusBars = !darkTheme
+                }
 
-            AIScrollTheme(darkTheme = darkTheme) {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-                ) {
-                    MainScreen(
-                        onOpenAccessibilitySettings = { openAccessibilitySettings() }
-                    )
+                AIScrollTheme(darkTheme = darkTheme) {
+                    Surface(
+                        modifier = Modifier.fillMaxSize(),
+                        color = MaterialTheme.colorScheme.background
+                    ) {
+                        MainScreen(
+                            onOpenAccessibilitySettings = { openAccessibilitySettings() }
+                        )
+                    }
                 }
             }
+        } catch (e: Exception) {
+            Log.e("MainActivity", "Error in onCreate: ${e.message}", e)
+            Toast.makeText(this, "Error initializing app", Toast.LENGTH_LONG).show()
         }
     }
 
@@ -143,20 +150,35 @@ fun MainScreen(onOpenAccessibilitySettings: () -> Unit) {
     DisposableEffect(Unit) {
         val receiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context?, intent: Intent?) {
-                when (intent?.action) {
-                    ScrollAccessibilityService.ACTION_CAMERA_STATE_CHANGED -> {
-                        val newState = intent.getBooleanExtra(ScrollAccessibilityService.EXTRA_CAMERA_STATE, false)
-                        isCameraRunning = newState
+                try {
+                    when (intent?.action) {
+                        ScrollAccessibilityService.ACTION_CAMERA_STATE_CHANGED -> {
+                            val newState = intent.getBooleanExtra(ScrollAccessibilityService.EXTRA_CAMERA_STATE, false)
+                            isCameraRunning = newState
+                        }
                     }
+                } catch (e: Exception) {
+                    Log.e("MainScreen", "Error in broadcast receiver: ${e.message}", e)
                 }
             }
         }
 
-        val filter = IntentFilter(ScrollAccessibilityService.ACTION_CAMERA_STATE_CHANGED)
-        context.registerReceiver(receiver, filter)
+        try {
+            val filter = IntentFilter(ScrollAccessibilityService.ACTION_CAMERA_STATE_CHANGED)
+            @Suppress("UnspecifiedRegisterReceiverFlag") // Suppress the warning
+            context.registerReceiver(receiver, filter)
+        } catch (e: Exception) {
+            Log.e("MainScreen", "Error registering receiver: ${e.message}", e)
+            Toast.makeText(context, "Error registering camera state receiver", Toast.LENGTH_SHORT).show()
+        }
 
+        // Return the dispose effect
         onDispose {
-            context.unregisterReceiver(receiver)
+            try {
+                context.unregisterReceiver(receiver)
+            } catch (e: Exception) {
+                Log.e("MainScreen", "Error unregistering receiver: ${e.message}", e)
+            }
         }
     }
 
@@ -200,10 +222,20 @@ fun MainScreen(onOpenAccessibilitySettings: () -> Unit) {
         // Updated Camera Toggle Button
         AIButton(
             onClick = {
-                val intent = Intent(context, ScrollAccessibilityService::class.java).apply {
-                    action = ScrollAccessibilityService.ACTION_TOGGLE_CAMERA
+                try {
+                    Log.d("MainScreen", "Sending camera toggle command")
+                    val intent = Intent(context, ScrollAccessibilityService::class.java).apply {
+                        action = ScrollAccessibilityService.ACTION_TOGGLE_CAMERA
+                    }
+                    context.startService(intent)
+                } catch (e: Exception) {
+                    Log.e("MainScreen", "Error toggling camera: ${e.message}", e)
+                    Toast.makeText(
+                        context,
+                        "Error toggling camera. Please check accessibility service is enabled.",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
-                context.startService(intent)
             },
             text = if (isCameraRunning) "Turn Camera OFF" else "Turn Camera ON"
         )

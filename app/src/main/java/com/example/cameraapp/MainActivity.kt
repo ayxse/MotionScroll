@@ -52,7 +52,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        
+
         if (!allPermissionsGranted()) {
             ActivityCompat.requestPermissions(this, REQUIRED_PERMISSIONS, CAMERA_PERMISSION_REQUEST)
         }
@@ -142,7 +142,7 @@ class MainActivity : ComponentActivity() {
 fun MainScreen(onOpenAccessibilitySettings: () -> Unit) {
     val context = LocalContext.current
     val isDarkTheme = isSystemInDarkTheme()
-    
+
     // Create a mutable state for camera status
     var isCameraRunning by remember { mutableStateOf(ScrollAccessibilityService.isCameraRunning) }
 
@@ -183,11 +183,9 @@ fun MainScreen(onOpenAccessibilitySettings: () -> Unit) {
     }
 
     // State variables
-    var sensitivity by remember { mutableStateOf(ScrollAccessibilityService.currentSensitivity) }
-    var scrollSpeed by remember { mutableStateOf(ScrollAccessibilityService.currentScrollSpeed) }
-    var isSmoothScrollEnabled by remember { mutableStateOf(ScrollAccessibilityService.isSmoothScrollEnabled) }
-    var isAddedDelayEnabled by remember { mutableStateOf(ScrollAccessibilityService.isAddedDelayEnabled) }
-    var delaySeconds by remember { mutableStateOf(ScrollAccessibilityService.addedDelaySeconds.toString()) }
+    // Initialize UI state with the new default value from the companion object
+    var skipDistanceMultiplier by remember { mutableStateOf(ScrollAccessibilityService.DEFAULT_SKIP_MULTIPLIER) } // State for skip distance (default 0.09f)
+    var delaySeconds by remember { mutableStateOf(ScrollAccessibilityService.addedDelaySeconds.toString()) } // Keep state for delay input
 
     // Add scroll state
     val scrollState = rememberScrollState()
@@ -216,14 +214,25 @@ fun MainScreen(onOpenAccessibilitySettings: () -> Unit) {
         // Enable Accessibility Service Button
         AIButton(
             onClick = onOpenAccessibilitySettings,
-            text = "Enable Accessibility Service"
+            text = "Accessibility Services"
         )
 
-        // Updated Camera Toggle Button
-        AIButton(
-            onClick = {
-                try {
-                    Log.d("MainScreen", "Sending camera toggle command")
+        // Camera Toggle Switch
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text("Camera", style = MaterialTheme.typography.bodyLarge)
+            Switch(
+                checked = isCameraRunning,
+                onCheckedChange = { checked -> // Use the 'checked' parameter from lambda
+                    // Optimistically update UI state immediately
+                    isCameraRunning = checked // Update local state based on switch action
+
+                    // Send command to service
+                    try {
+                        Log.d("MainScreen", "Sending camera toggle command via Switch (new state: $checked)")
                     val intent = Intent(context, ScrollAccessibilityService::class.java).apply {
                         action = ScrollAccessibilityService.ACTION_TOGGLE_CAMERA
                     }
@@ -235,94 +244,87 @@ fun MainScreen(onOpenAccessibilitySettings: () -> Unit) {
                         "Error toggling camera. Please check accessibility service is enabled.",
                         Toast.LENGTH_SHORT
                     ).show()
+                    // The BroadcastReceiver will handle the definitive state update from the service
                 }
-            },
-            text = if (isCameraRunning) "Turn Camera OFF" else "Turn Camera ON"
-        )
+            }
+            )
+        }
 
-        Text("Adjust Sensitivity", style = MaterialTheme.typography.headlineSmall)
-
+        // Add Skip Distance Slider
+        Text("Adjust Skip Distance", style = MaterialTheme.typography.headlineSmall)
         AISlider(
-            value = sensitivity,
+            value = skipDistanceMultiplier,
             onValueChange = { newValue ->
-                sensitivity = newValue
-                ScrollAccessibilityService.currentSensitivity = sensitivity
+                skipDistanceMultiplier = newValue
+                // Send Intent to update service using startService
+                val intent = Intent(context, ScrollAccessibilityService::class.java).apply { // Explicitly target service
+                    action = ScrollAccessibilityService.ACTION_UPDATE_SKIP_DISTANCE
+                    putExtra(ScrollAccessibilityService.EXTRA_SKIP_DISTANCE, newValue)
+                }
+                context.startService(intent) // Use startService to ensure delivery to onStartCommand
             },
-            valueRange = 5f..15f,
-            steps = 9,
-            title = "Sensitivity",
-            startLabel = "More",
-            endLabel = "Less"
+            valueRange = 0.03f..0.15f, // Correct Range: 3% to 15%
+            //steps = 4, // Correct Steps: 5 steps total (0.03 increments: 0.03, 0.06, 0.09, 0.12, 0.15) -> 0.09 is center
+            title = "Skip Distance",
+            startLabel = "Less",
+            endLabel = "More"
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.weight(1f)) // Keep spacer to push delay to bottom
 
-        Text("Adjust Scrolling Speed", style = MaterialTheme.typography.headlineSmall)
-
-        AISlider(
-            value = scrollSpeed,
-            onValueChange = { newValue ->
-                scrollSpeed = newValue
-                ScrollAccessibilityService.currentScrollSpeed = scrollSpeed
-            },
-            valueRange = 100f..500f,
-            steps = 8,
-            title = "Scrolling Speed",
-            startLabel = "Slow",
-            endLabel = "Fast"
-        )
-
-        Spacer(modifier = Modifier.weight(1f))
-
-        AIButton(
-            onClick = {
-                isSmoothScrollEnabled = !isSmoothScrollEnabled
-                ScrollAccessibilityService.isSmoothScrollEnabled = isSmoothScrollEnabled
-                sendBroadcast(context, ScrollAccessibilityService.ACTION_TOGGLE_SMOOTH_SCROLL)
-            },
-            text = if (isSmoothScrollEnabled) "Switch to Skipping Mode" else "Switch to Smooth Scrolling"
-        )
-
+        // Simplified Delay / Scroll Mode Input
         Row(
+            modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            AIButton(
-                onClick = {
-                    isAddedDelayEnabled = !isAddedDelayEnabled
-                    ScrollAccessibilityService.isAddedDelayEnabled = isAddedDelayEnabled
-                    sendBroadcast(context, ScrollAccessibilityService.ACTION_TOGGLE_ADDED_DELAY)
+            OutlinedTextField(
+                value = delaySeconds,
+                onValueChange = { newValue ->
+                    // Allow only digits, ensure it's not empty before trying to parse
+                    if (newValue.all { it.isDigit() }) {
+                         delaySeconds = newValue
+                    }
                 },
-                text = if (isAddedDelayEnabled) "Added Delay ON" else "Added Delay OFF",
-                modifier = Modifier.weight(1f)
+                label = { Text("Scroll Mode/Delay") },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                modifier = Modifier.weight(1f) // Take available space
             )
-
-            if (isAddedDelayEnabled) {
-                OutlinedTextField(
-                    value = delaySeconds,
-                    onValueChange = { newValue ->
-                        if (newValue.isEmpty() || newValue.toIntOrNull() != null) {
-                            delaySeconds = newValue
-                        }
-                    },
-                    label = { Text("Delay (seconds)") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.width(120.dp)
-                )
-
-                Button(
-                    onClick = {
-                        val delay = delaySeconds.toIntOrNull() ?: 3
-                        ScrollAccessibilityService.addedDelaySeconds = delay
-                        val intent = Intent(ScrollAccessibilityService.ACTION_UPDATE_DELAY)
-                        intent.putExtra(ScrollAccessibilityService.EXTRA_DELAY_SECONDS, delay)
-                        context.sendBroadcast(intent)
-                    },
-                    modifier = Modifier.height(56.dp)
-                ) {
-                    Text("Enter")
-                }
+            Button(
+                onClick = {
+                    // Default to 1 (Skip Mode) if empty or invalid
+                    val delayValue = delaySeconds.toIntOrNull()?.coerceAtLeast(0) ?: 1
+                    delaySeconds = delayValue.toString() // Update state to reflect parsed value
+                    // Send Intent to update service using startService
+                    val intent = Intent(context, ScrollAccessibilityService::class.java).apply { // Explicitly target service
+                        action = ScrollAccessibilityService.ACTION_UPDATE_DELAY
+                        putExtra(ScrollAccessibilityService.EXTRA_DELAY_SECONDS, delayValue)
+                    }
+                    context.startService(intent) // Use startService
+                    Log.d("MainScreen", "Sent delay update: $delayValue")
+                },
+                modifier = Modifier.height(56.dp) // Match TextField height
+            ) {
+                Text("Set")
             }
+        }
+        // Info Text for Delay Input
+        Row(
+             modifier = Modifier.fillMaxWidth().padding(start = 4.dp), // Align with TextField
+             verticalAlignment = Alignment.CenterVertically,
+             horizontalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+             Icon(
+                 painter = painterResource(id = android.R.drawable.ic_dialog_info), // Standard info icon
+                 contentDescription = "Info",
+                 modifier = Modifier.size(16.dp),
+                 tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f) // Adjust color/alpha
+             )
+             Text(
+                 text = "0 = Continuous, 1 = Skip (Default), >1 = Delay (seconds)",
+                 style = MaterialTheme.typography.bodySmall,
+                 color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
+             )
         }
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -340,7 +342,7 @@ fun AIButton(onClick: () -> Unit, text: String, modifier: Modifier = Modifier) {
     Button(
         onClick = onClick,
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(8.dp),
+        shape = RoundedCornerShape(50), // Increase rounding for pill shape
         colors = ButtonDefaults.buttonColors(
             containerColor = Purple8e5fb6,
             contentColor = Color.White
@@ -355,7 +357,7 @@ fun AISlider(
     value: Float,
     onValueChange: (Float) -> Unit,
     valueRange: ClosedFloatingPointRange<Float>,
-    steps: Int,
+    // steps: Int, // Remove steps parameter for continuous slider
     title: String,
     startLabel: String,
     endLabel: String
@@ -370,7 +372,7 @@ fun AISlider(
             value = value,
             onValueChange = onValueChange,
             valueRange = valueRange,
-            steps = steps,
+            // steps = steps, // Remove steps from internal Slider call
             modifier = Modifier.fillMaxWidth(),
             colors = SliderDefaults.colors(
                 thumbColor = Purple8e5fb6,

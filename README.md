@@ -2,8 +2,21 @@
   <a href="https://ayxse.github.io/Motionscroll-website/" target="_blank">
     <img src="docs/images/motionscroll.png" alt="MotionScroll Logo" width="150">
   </a>
-  <br> 
+  <br>
 <h2 align="center">Motion<span style="color:#8E5FB6;">Scroll</span></h2>
+</p>
+
+<p align="center">
+  <!-- Installation Guide Tab/Button -->
+  <a href="https://ayxse.github.io/Motionscroll-website/guide" target="_blank">
+    <img src="https://img.shields.io/badge/Installation-Guide-%238E5FB6?style=for-the-badge" alt="Installation Guide"/>
+  </a>
+  <!-- You could add more badges here later, e.g., for the main website -->
+  <!--
+  <a href="https://ayxse.github.io/Motionscroll-website/" target="_blank">
+    <img src="https://img.shields.io/badge/Website-%238E5FB6?style=for-the-badge" alt="Website"/>
+  </a>
+  -->
 </p>
 
 Scroll through your Android screen using simple head movements. Built with Jetpack Compose and ML Kit.
@@ -34,9 +47,9 @@ Here's a glimpse of MotionScroll in action:
 ## Download
 
 *   **Version:** 1.0.0
-*   **Updated at:** 2025-04-21 
-*   **Min. Android version:** API 24 (Android 7.0 Nougat) or higher 
-*   **Download:** [APK on GitHub Releases](https://github.com/ayxse/MotionScroll/releases/tag/v1.0.0) 
+*   **Updated at:** 2025-04-21
+*   **Min. Android version:** API 24 (Android 7.0 Nougat) or higher
+*   **Download:** [APK on GitHub Releases](https://github.com/ayxse/MotionScroll/releases/tag/v1.0.0)
 
 
 ## Tech Stack
@@ -51,7 +64,7 @@ Here's a glimpse of MotionScroll in action:
 ## Building
 
 1.  Ensure you have the latest stable version of Android Studio installed.
-2.  Clone the repository: `git clone https://github.com/ayxse/MotionScroll.git` 
+2.  Clone the repository: `git clone https://github.com/ayxse/MotionScroll.git`
 3.  Open the project in Android Studio.
 4.  Let Gradle sync the project dependencies.
 5.  Run the `app` configuration on an emulator or physical device.
@@ -61,4 +74,3 @@ Here's a glimpse of MotionScroll in action:
 Copyright 2025 Cristian <!-- Or your name/entity -->
 
 Licensed under the Apache License, Version 2.0. See the [LICENSE](LICENSE) file for the full license text.
-

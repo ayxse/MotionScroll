@@ -14,14 +14,11 @@ MotionScroll is an Android application that leverages the front camera and acces
 
 Here's a glimpse of MotionScroll in action:
 
-| Main Interface | Skip Distance Setting |
-|---|---|
-| ![Screenshot 1](docs/images/1.png) | ![Screenshot 2](docs/images/2.png) |
-| **Scroll Mode: Continuous** | **Scroll Mode: Skip** |
-| ![Screenshot 3](docs/images/3.png) | ![Screenshot 4](docs/images/4.png) |
-| **Scroll Mode: Delay** | **Accessibility Service** |
-| ![Screenshot 5](docs/images/5.png) | ![Screenshot 6](docs/images/6.png) |
-
+<img src="docs/images/1.png" alt="Screenshot 1" width="400"> <img src="docs/images/2.png" alt="Screenshot 2" width="400">
+<br>
+<img src="docs/images/3.png" alt="Screenshot 3" width="400"> <img src="docs/images/4.png" alt="Screenshot 4" width="400">
+<br>
+<img src="docs/images/5.png" alt="Screenshot 5" width="400"> <img src="docs/images/6.png" alt="Screenshot 6" width="400">
 
 
 ## Features

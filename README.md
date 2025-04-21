@@ -56,7 +56,6 @@ Here's a glimpse of MotionScroll in action:
 
 *   **Language:** Kotlin
 *   **User Interface:** Jetpack Compose
-*   **Concurrency:** Coroutines
 *   **Camera:** CameraX
 *   **Machine Learning:** Google ML Kit (Face Detection)
 *   **Core:** Android Accessibility Service, Android SDK

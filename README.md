@@ -1,6 +1,10 @@
-# MotionScroll
-
-[![MotionScroll Logo](docs/images/motionscroll.png)](https://ayxse.github.io/Motionscroll-website/)
+<p align="center">
+  <a href="https://ayxse.github.io/Motionscroll-website/" target="_blank">
+    <img src="docs/images/motionscroll.png" alt="MotionScroll Logo" width="150">
+  </a>
+  <br> 
+  <h2 align="center">Motion<span style="color:#905cb4;">Scroll</span></h2>
+</p>
 
 Scroll through your Android screen using simple head movements. Built with Jetpack Compose and ML Kit.
 
@@ -10,12 +14,15 @@ MotionScroll is an Android application that leverages the front camera and acces
 
 Here's a glimpse of MotionScroll in action:
 
-![Screenshot 1](docs/images/1.png)
-![Screenshot 2](docs/images/2.png)
-![Screenshot 3](docs/images/3.png)
-![Screenshot 4](docs/images/4.png)
-![Screenshot 5](docs/images/5.png)
-![Screenshot 6](docs/images/6.png)
+| Main Interface | Skip Distance Setting |
+|---|---|
+| ![Screenshot 1](docs/images/1.png) | ![Screenshot 2](docs/images/2.png) |
+| **Scroll Mode: Continuous** | **Scroll Mode: Skip** |
+| ![Screenshot 3](docs/images/3.png) | ![Screenshot 4](docs/images/4.png) |
+| **Scroll Mode: Delay** | **Accessibility Service** |
+| ![Screenshot 5](docs/images/5.png) | ![Screenshot 6](docs/images/6.png) |
+
+
 
 ## Features
 
@@ -33,9 +40,9 @@ Here's a glimpse of MotionScroll in action:
 ## Download
 
 *   **Version:** 1.0.0
-*   **Updated at:** 2025-04-21
-*   **Min. Android version:** (Check your `build.gradle.kts` - likely API 24+ due to CameraX/MLKit)
-*   **Download:** [APK](https://github.com/ayxse/MotionScroll/releases/tag/v1.0.0)
+*   **Updated at:** 2025-04-21 
+*   **Min. Android version:** API 24 (Android 7.0 Nougat) or higher 
+*   **Download:** [APK on GitHub Releases](https://github.com/ayxse/MotionScroll/releases/tag/v1.0.0) 
 
 
 ## Tech Stack
@@ -50,23 +57,14 @@ Here's a glimpse of MotionScroll in action:
 ## Building
 
 1.  Ensure you have the latest stable version of Android Studio installed.
-2.  Clone the repository: `git clone https://github.com/your-username/MotionScroll.git`
+2.  Clone the repository: `git clone https://github.com/ayxse/MotionScroll.git` 
 3.  Open the project in Android Studio.
 4.  Let Gradle sync the project dependencies.
 5.  Run the `app` configuration on an emulator or physical device.
 
 ## License
 
-Copyright 2025 Cristian
+Copyright 2025 Cristian <!-- Or your name/entity -->
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
+Licensed under the Apache License, Version 2.0. See the [LICENSE](LICENSE) file for the full license text.
 
-   http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.

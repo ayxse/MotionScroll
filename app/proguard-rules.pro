@@ -32,3 +32,4 @@
 
 # Keep Accessibility Service (Ensure it's not removed)
 -keep class com.example.cameraapp.ScrollAccessibilityService { *; }
+

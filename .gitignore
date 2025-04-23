@@ -16,3 +16,4 @@ local.properties
 
 # Custom ignores
 /app/release/
+/.idea

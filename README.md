@@ -23,6 +23,8 @@ Scroll through your Android screen using simple head movements. Built with Jetpa
 
 MotionScroll is an Android application that leverages the front camera and accessibility features to enable hands-free scrolling based on head tilt detection.
 
+**Important Note:** To avoid unintended scrolling when navigating within the application settings or other parts of your device, it is **critically important** to use the shortcut overlay to disable camera-based head tracking **before** you start navigating. Head tracking remains active while the app is open, and attempting to navigate menus or settings with head tracking enabled and without the shortcut overlay to quickly disable it will likely result in unwanted scrolling. Always use the shortcut overlay to toggle tracking off when you need to use standard touch or navigation methods.
+
 ## Screenshots
 
 Here's a glimpse of MotionScroll in action:

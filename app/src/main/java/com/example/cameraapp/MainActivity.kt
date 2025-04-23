@@ -21,7 +21,6 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import kotlin.math.roundToInt
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.view.WindowCompat
@@ -37,13 +36,22 @@ import android.content.BroadcastReceiver
 import android.content.IntentFilter
 import android.widget.Toast
 import android.util.Log
-import android.os.Build
+import android.net.Uri
+import androidx.compose.foundation.text.ClickableText
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.withStyle
+import android.content.ActivityNotFoundException
+import androidx.preference.PreferenceManager
+import androidx.compose.runtime.mutableFloatStateOf // Added import
+
 
 val Purple8e5fb6 = Color(0xFF8e5fb6)
 
 class MainActivity : ComponentActivity() {
-    private val CAMERA_PERMISSION_REQUEST = 100
-    private val REQUIRED_PERMISSIONS = arrayOf(
+    private val cameraPermissionRequest = 100 // Renamed
+    private val requiredPermissions = arrayOf( // Renamed
         Manifest.permission.CAMERA,
         Manifest.permission.FOREGROUND_SERVICE,
         Manifest.permission.FOREGROUND_SERVICE_CAMERA,
@@ -54,7 +62,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         if (!allPermissionsGranted()) {
-            ActivityCompat.requestPermissions(this, REQUIRED_PERMISSIONS, CAMERA_PERMISSION_REQUEST)
+            ActivityCompat.requestPermissions(this, requiredPermissions, cameraPermissionRequest) // Updated names
         }
 
         try {
@@ -95,42 +103,18 @@ class MainActivity : ComponentActivity() {
         startActivity(intent)
     }
 
-    private fun toggleCamera() {
-        if (!checkCameraPermission()) {
-            requestCameraPermission()
-            return
-        }
-
-        val intent = Intent(ScrollAccessibilityService.ACTION_TOGGLE_CAMERA)
-        sendBroadcast(intent)
-    }
-
-    private fun checkCameraPermission(): Boolean {
-        return ContextCompat.checkSelfPermission(
-            this,
-            Manifest.permission.CAMERA
-        ) == PackageManager.PERMISSION_GRANTED
-    }
-
-    private fun requestCameraPermission() {
-        ActivityCompat.requestPermissions(
-            this,
-            arrayOf(Manifest.permission.CAMERA),
-            CAMERA_PERMISSION_REQUEST
-        )
-    }
-
-    private fun allPermissionsGranted() = REQUIRED_PERMISSIONS.all {
+    private fun allPermissionsGranted() = requiredPermissions.all { // Updated name
         ContextCompat.checkSelfPermission(baseContext, it) == PackageManager.PERMISSION_GRANTED
     }
 
+    @Suppress("DEPRECATION") // Suppress deprecation warning
     override fun onRequestPermissionsResult(
         requestCode: Int,
         permissions: Array<String>,
         grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == CAMERA_PERMISSION_REQUEST) {
+        if (requestCode == cameraPermissionRequest) { // Updated name
             if (!allPermissionsGranted()) {
                 Toast.makeText(this, "Permissions not granted.", Toast.LENGTH_SHORT).show()
             }
@@ -142,6 +126,57 @@ class MainActivity : ComponentActivity() {
 fun MainScreen(onOpenAccessibilitySettings: () -> Unit) {
     val context = LocalContext.current
     val isDarkTheme = isSystemInDarkTheme()
+
+    // SharedPreferences to track if the dialog has been shown
+    val prefs = PreferenceManager.getDefaultSharedPreferences(context)
+    var showWelcomeDialog by remember { mutableStateOf(!prefs.getBoolean("has_shown_welcome_dialog", false)) }
+
+    LaunchedEffect(showWelcomeDialog) {
+        // Show dialog only if it hasn't been shown before
+        if (showWelcomeDialog) {
+            // Mark dialog as shown
+            prefs.edit().putBoolean("has_shown_welcome_dialog", true).apply()
+        }
+    }
+
+    if (showWelcomeDialog) {
+        AlertDialog(
+            onDismissRequest = { showWelcomeDialog = false },
+            title = { Text("Welcome to MotionScroll!") },
+            text = {
+                val annotatedString = buildAnnotatedString {
+                    append("For a smooth and functional experience, please read the ")
+                    pushStringAnnotation(tag = "URL", annotation = "https://ayxse.github.io/Motionscroll-website")
+                    withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.primary, textDecoration = TextDecoration.Underline)) {
+                        append("Installation Guide")
+                    }
+                    pop()
+                    append(" on the website to properly configure the application, including setting up the floating overlay shortcut. It is critically important to enable this shortcut as it allows you to quickly toggle head tracking on/off, which is essential for navigating within applications or settings without unintended scrolling.")
+                }
+
+                ClickableText(
+                    text = annotatedString,
+                    onClick = { offset ->
+                        annotatedString.getStringAnnotations(tag = "URL", start = offset, end = offset)
+                            .firstOrNull()?.let { annotation ->
+                                try {
+                                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(annotation.item))
+                                    context.startActivity(intent)
+                                } catch (e: ActivityNotFoundException) {
+                                    Toast.makeText(context, "No browser found to open the link.", Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                    },
+                    style = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurface)
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = { showWelcomeDialog = false }) {
+                    Text("Got It")
+                }
+            }
+        )
+    }
 
     // Create a mutable state for camera status
     var isCameraRunning by remember { mutableStateOf(ScrollAccessibilityService.isCameraRunning) }
@@ -184,7 +219,7 @@ fun MainScreen(onOpenAccessibilitySettings: () -> Unit) {
 
     // State variables
     // Initialize UI state with the new default value from the companion object
-    var skipDistanceMultiplier by remember { mutableStateOf(ScrollAccessibilityService.DEFAULT_SKIP_MULTIPLIER) } // State for skip distance (default 0.09f)
+    var skipDistanceMultiplier by remember { mutableFloatStateOf(ScrollAccessibilityService.DEFAULT_SKIP_MULTIPLIER) } // State for skip distance (default 0.09f) // Changed to mutableFloatStateOf
     var delaySeconds by remember { mutableStateOf(ScrollAccessibilityService.addedDelaySeconds.toString()) } // Keep state for delay input
 
     // Add scroll state
@@ -329,12 +364,6 @@ fun MainScreen(onOpenAccessibilitySettings: () -> Unit) {
 
         Spacer(modifier = Modifier.height(16.dp))
     }
-}
-
-// Helper function to send broadcasts
-private fun sendBroadcast(context: Context, action: String) {
-    val intent = Intent(action)
-    context.sendBroadcast(intent)
 }
 
 @Composable

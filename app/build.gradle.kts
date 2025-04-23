@@ -83,5 +83,7 @@ dependencies {
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
-}
 
+    // For SharedPreferences
+    implementation("androidx.preference:preference-ktx:1.2.0")
+}

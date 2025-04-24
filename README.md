@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="https://ayxse.github.io/Motionscroll-website/" target="_blank">
+  <a href="motionscroll.app" target="_blank">
     <img src="docs/images/motionscroll.png" alt="MotionScroll Logo" width="150">
   </a>
   <br>
@@ -8,7 +8,7 @@
 
 <p align="center">
   <!-- Installation Guide Tab/Button -->
-  <a href="motionscroll.app" target="_blank">
+  <a href="motionscroll.app/guide" target="_blank">
     <img src="https://img.shields.io/badge/Installation-Guide-%238E5FB6?style=for-the-badge" alt="Installation Guide"/>
   </a>
   <!-- You could add more badges here later, e.g., for the main website -->

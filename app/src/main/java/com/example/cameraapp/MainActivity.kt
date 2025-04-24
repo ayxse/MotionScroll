@@ -146,7 +146,7 @@ fun MainScreen(onOpenAccessibilitySettings: () -> Unit) {
             text = {
                 val annotatedString = buildAnnotatedString {
                     append("For a smooth and functional experience, please read the ")
-                    pushStringAnnotation(tag = "URL", annotation = "https://ayxse.github.io/Motionscroll-website")
+                    pushStringAnnotation(tag = "URL", annotation = "https://www.motionscroll.app/")
                     withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.primary, textDecoration = TextDecoration.Underline)) {
                         append("Installation Guide")
                     }

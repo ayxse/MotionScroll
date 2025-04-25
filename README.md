@@ -3,7 +3,7 @@
     <img src="docs/images/motionscroll.png" alt="MotionScroll Logo" width="150">
   </a>
   <br>
-<h2 align="center">Motion<span style="color:#8E5FB6;">Scroll</span></h2>
+<h2 align="center">MotionScroll</h2>
 </p>
 
 <p align="center">

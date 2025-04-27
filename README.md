@@ -8,15 +8,9 @@
 
 <p align="center">
   <!-- Installation Guide Tab/Button -->
-  <a href="https://www.motionscroll.app" target="_blank">
+  <a href="https://www.motionscroll.app/#/guide" target="_blank">
     <img src="https://img.shields.io/badge/Installation-Guide-%238E5FB6?style=for-the-badge" alt="Installation Guide"/>
   </a>
-  <!-- You could add more badges here later, e.g., for the main website -->
-  <!--
-  <a href="https://ayxse.github.io/Motionscroll-website/" target="_blank">
-    <img src="https://img.shields.io/badge/Website-%238E5FB6?style=for-the-badge" alt="Website"/>
-  </a>
-  -->
 </p>
 
 Scroll through your Android screen using simple head movements. Built with Jetpack Compose and ML Kit.

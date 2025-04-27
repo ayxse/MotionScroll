@@ -37,6 +37,7 @@ import android.content.IntentFilter
 import android.widget.Toast
 import android.util.Log
 import android.net.Uri
+import android.os.Build
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -282,6 +283,45 @@ fun MainScreen(onOpenAccessibilitySettings: () -> Unit) {
                     // The BroadcastReceiver will handle the definitive state update from the service
                 }
             }
+            )
+        }
+
+        // Custom Overlay Toggle Switch
+        var isOverlayRunning by remember { mutableStateOf(false) } // State for overlay service
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text("Custom Overlay", style = MaterialTheme.typography.bodyLarge)
+            Switch(
+                checked = isOverlayRunning,
+                onCheckedChange = { checked ->
+                    if (checked) {
+                        // Check for SYSTEM_ALERT_WINDOW permission
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(context)) {
+                            // Permission not granted, prompt user
+                            Toast.makeText(context, "Please grant Draw Over Other Apps permission", Toast.LENGTH_LONG).show()
+                            val intent = Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:" + context.packageName))
+                            context.startActivity(intent)
+                            // Do not start the service yet, wait for the user to grant permission
+                            isOverlayRunning = false // Revert the switch state
+                        } else {
+                            // Permission granted, start the custom overlay service
+                            isOverlayRunning = checked // Update the switch state
+                            val intent = Intent(context, CameraOverlayService::class.java)
+                            context.startService(intent)
+                            Log.d("MainScreen", "Started CameraOverlayService")
+                        }
+                    } else {
+                        // Stop the custom overlay service
+                        isOverlayRunning = checked // Update the switch state
+                        val intent = Intent(context, CameraOverlayService::class.java)
+                        context.stopService(intent)
+                        Log.d("MainScreen", "Stopped CameraOverlayService")
+                    }
+                }
             )
         }
 

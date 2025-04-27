@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Pressed state (Red) -->
+    <item android:state_pressed="true">
+        <shape android:shape="oval">
+            <solid android:color="#FFFF0000" /> <!-- Solid red -->
+            <size android:width="50dp" android:height="50dp" /> <!-- Match button size -->
+        </shape>
+    </item>
+    <!-- Default state (Grey) -->
+    <item>
+        <shape android:shape="oval">
+            <solid android:color="#80808080" /> <!-- Transparent grey -->
+            <size android:width="50dp" android:height="50dp" /> <!-- Match button size -->
+        </shape>
+    </item>
+</selector>

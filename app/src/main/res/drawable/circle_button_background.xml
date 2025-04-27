@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="oval">
+    <solid android:color="#8e5fb6" /> <!-- Using the purple color from the app's theme -->
+    <size android:width="50dp" android:height="50dp" /> <!-- Match button size -->
+</shape>

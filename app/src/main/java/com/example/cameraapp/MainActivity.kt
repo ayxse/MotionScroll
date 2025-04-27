@@ -294,7 +294,7 @@ fun MainScreen(onOpenAccessibilitySettings: () -> Unit) {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text("Custom Overlay", style = MaterialTheme.typography.bodyLarge)
+            Text("Floating button", style = MaterialTheme.typography.bodyLarge)
             Switch(
                 checked = isOverlayRunning,
                 onCheckedChange = { checked ->

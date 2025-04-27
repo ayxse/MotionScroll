@@ -48,10 +48,10 @@ Here's a glimpse of MotionScroll in action:
 
 ## Download
 
-*   **Version:** 1.0.1
-*   **Updated at:** 2025-04-23
+*   **Version:** 1.0.2
+*   **Updated at:** 2025-04-27
 *   **Min. Android version:** API 24 (Android 7.0 Nougat) or higher
-*   **Download:** [APK on GitHub Releases](https://github.com/ayxse/MotionScroll/releases/tag/v1.0.1)
+*   **Download:** [APK on GitHub Releases](https://github.com/ayxse/MotionScroll/releases/tag/v1.0.2)
 
 
 ## Tech Stack

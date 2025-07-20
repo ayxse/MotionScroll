@@ -29,8 +29,7 @@ class CameraOverlayService : Service() {
     private lateinit var overlayView: View
 
 
-    // private var cameraStateReceiver: BroadcastReceiver? = null // Removed conflicting declaration
-    private lateinit var cameraToggleButton: Button // Declare button here to access in receiver
+    private lateinit var cameraToggleButton: Button 
 
     // Define the BroadcastReceiver
     private val cameraStateReceiver = object : BroadcastReceiver() {
@@ -110,9 +109,6 @@ class CameraOverlayService : Service() {
 
         // Register the BroadcastReceiver
         val filter = IntentFilter(ScrollAccessibilityService.ACTION_CAMERA_STATE_CHANGED)
-        // Consider using LocalBroadcastManager for security if broadcasts are internal only
-        // LocalBroadcastManager.getInstance(this).registerReceiver(cameraStateReceiver, filter)
-        // For system-wide broadcast (as currently implemented in ScrollAccessibilityService):
         try {
              ContextCompat.registerReceiver(this, cameraStateReceiver, filter, ContextCompat.RECEIVER_NOT_EXPORTED) // Use RECEIVER_NOT_EXPORTED for security
              Log.d(TAG, "Registered camera state receiver")
@@ -185,7 +181,7 @@ class CameraOverlayService : Service() {
         // Unregister the broadcast receiver
         try {
             // LocalBroadcastManager.getInstance(this).unregisterReceiver(cameraStateReceiver)
-            // For system-wide broadcast:
+            // For system-wide broadcast: 
             unregisterReceiver(cameraStateReceiver)
             Log.d(TAG, "Unregistered camera state receiver")
         } catch (e: IllegalArgumentException) {

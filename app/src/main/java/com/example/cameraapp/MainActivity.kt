@@ -51,8 +51,8 @@ import androidx.compose.runtime.mutableFloatStateOf // Added import
 val Purple8e5fb6 = Color(0xFF8e5fb6)
 
 class MainActivity : ComponentActivity() {
-    private val cameraPermissionRequest = 100 // Renamed
-    private val requiredPermissions = arrayOf( // Renamed
+    private val cameraPermissionRequest = 100 
+    private val requiredPermissions = arrayOf(
         Manifest.permission.CAMERA,
         Manifest.permission.FOREGROUND_SERVICE,
         Manifest.permission.FOREGROUND_SERVICE_CAMERA,
@@ -63,7 +63,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         if (!allPermissionsGranted()) {
-            ActivityCompat.requestPermissions(this, requiredPermissions, cameraPermissionRequest) // Updated names
+            ActivityCompat.requestPermissions(this, requiredPermissions, cameraPermissionRequest) 
         }
 
         try {
@@ -104,18 +104,18 @@ class MainActivity : ComponentActivity() {
         startActivity(intent)
     }
 
-    private fun allPermissionsGranted() = requiredPermissions.all { // Updated name
+    private fun allPermissionsGranted() = requiredPermissions.all { 
         ContextCompat.checkSelfPermission(baseContext, it) == PackageManager.PERMISSION_GRANTED
     }
 
-    @Suppress("DEPRECATION") // Suppress deprecation warning
+    @Suppress("DEPRECATION") 
     override fun onRequestPermissionsResult(
         requestCode: Int,
         permissions: Array<String>,
         grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == cameraPermissionRequest) { // Updated name
+        if (requestCode == cameraPermissionRequest) { 
             if (!allPermissionsGranted()) {
                 Toast.makeText(this, "Permissions not granted.", Toast.LENGTH_SHORT).show()
             }

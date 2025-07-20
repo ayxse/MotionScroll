@@ -50,23 +50,11 @@ class ScrollAccessibilityService : AccessibilityService(), LifecycleOwner {
         var currentSkipDistanceMultiplier = DEFAULT_SKIP_MULTIPLIER // Variable for skip distance
         const val ACTION_TOGGLE_SERVICE = "com.example.cameraapp.ACTION_TOGGLE_SERVICE"
         const val ACTION_TOGGLE_SMOOTH_SCROLL = "com.example.cameraapp.ACTION_TOGGLE_SMOOTH_SCROLL"
-        // const val ACTION_TOGGLE_SKIPPING = "com.example.cameraapp.ACTION_TOGGLE_SKIPPING" // Removed
-        // const val ACTION_UPDATE_SKIP_LEVEL = "com.example.cameraapp.ACTION_UPDATE_SKIP_LEVEL" // Removed (unused)
-        // const val EXTRA_SKIP_LEVEL = "com.example.cameraapp.EXTRA_SKIP_LEVEL" // Removed (unused)
-        // const val ACTION_TOGGLE_ADDED_DELAY = "com.example.cameraapp.ACTION_TOGGLE_ADDED_DELAY" // Removed
         const val ACTION_UPDATE_DELAY = "com.example.cameraapp.ACTION_UPDATE_DELAY" // Keep this
         const val EXTRA_DELAY_SECONDS = "com.example.cameraapp.EXTRA_DELAY_SECONDS" // Keep this
-        // const val ACTION_UPDATE_SENSITIVITY = "com.example.cameraapp.ACTION_UPDATE_SENSITIVITY" // Removed
-        // const val EXTRA_SENSITIVITY = "com.example.cameraapp.EXTRA_SENSITIVITY" // Removed
-        // const val ACTION_UPDATE_SCROLL_SPEED = "com.example.cameraapp.ACTION_UPDATE_SCROLL_SPEED" // Keep removed
-        // const val EXTRA_SCROLL_SPEED = "com.example.cameraapp.EXTRA_SCROLL_SPEED" // Keep removed
         const val ACTION_UPDATE_SKIP_DISTANCE = "com.example.cameraapp.ACTION_UPDATE_SKIP_DISTANCE" // Action for skip distance slider
         const val EXTRA_SKIP_DISTANCE = "com.example.cameraapp.EXTRA_SKIP_DISTANCE" // Extra for skip distance slider
         const val ACTION_TOGGLE_CAMERA = "com.example.cameraapp.ACTION_TOGGLE_CAMERA"
-        // var isSkippingEnabled = true // Keep removed
-        // var skipLevel = 1 // Removed (unused)
-        // var isAddedDelayEnabled = false // Removed - behavior now tied to delay value
-        var addedDelaySeconds = 1 // Default to 1 second (Skip Mode)
         var isCameraRunning = false
         const val ACTION_CAMERA_STATE_CHANGED = "com.example.cameraapp.ACTION_CAMERA_STATE_CHANGED"
         const val EXTRA_CAMERA_STATE = "camera_state"
@@ -479,4 +467,4 @@ class ScrollAccessibilityService : AccessibilityService(), LifecycleOwner {
             Manifest.permission.CAMERA
         ) == PackageManager.PERMISSION_GRANTED
     }
-} // End of ScrollAccessibilityService class
+} 
